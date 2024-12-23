@@ -18,6 +18,7 @@ jobs:
         with:
           script: |
             const issueBody = context.payload.issue.body;
+            console.log("body:", issueBody);
             const regex = /ignore alert (\w+) (\w+)/;
             const match = issueBody.match(regex);
             if (!match) {
