@@ -1,0 +1,77 @@
+name: Issue to PR
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  process_issue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Extract issue details
+        id: extract_details
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body;
+            const regex = /ignore alert (\w+) (\w+)/;
+            const match = issueBody.match(regex);
+            if (!match) {
+              return { proceed: false };
+            }
+            return { proceed: true, yyy: match[1], xxx: match[2] };
+
+      - name: Exit if no matching string found
+        if: steps.extract_details.outputs.proceed == 'false'
+        run: echo "No matching string found, exiting."
+
+      - name: Create files
+        if: steps.extract_details.outputs.proceed == 'true'
+        run: |
+          echo "Creating files..."
+          echo "" > "${{ steps.extract_details.outputs.yyy }}.txt"
+          echo "" > "${{ steps.extract_details.outputs.xxx }}.txt"
+
+      - name: Configure git
+        if: steps.extract_details.outputs.proceed == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Create a new branch for changes
+        if: steps.extract_details.outputs.proceed == 'true'
+        run: |
+          git checkout -b create-files-${{ github.event.issue.number }}
+
+      - name: Commit changes
+        if: steps.extract_details.outputs.proceed == 'true'
+        run: |
+          git add .
+          git commit -m "Create files based on issue #${{ github.event.issue.number }}"
+
+      - name: Push changes
+        if: steps.extract_details.outputs.proceed == 'true'
+        run: |
+          git push -u origin create-files-${{ github.event.issue.number }}
+
+      - name: Create Pull Request
+        if: steps.extract_details.outputs.proceed == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const prTitle = `Create files based on issue #${issueNumber}`;
+            const prBody = `This PR was created automatically from [issue #${issueNumber}](${context.payload.issue.html_url}).`;
+            const { data: pullRequest } = await github.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: prTitle,
+              head: `create-files-${issueNumber}`,
+              base: 'main',
+              body: prBody
+            });
+            return pullRequest;
