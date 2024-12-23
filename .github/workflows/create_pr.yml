@@ -26,40 +26,40 @@ jobs:
             return { proceed: true, yyy: match[1], xxx: match[2] };
 
       - name: Exit if no matching string found
-        if: steps.extract_details.outputs.proceed == 'false'
+        if: steps.extract_details.outputs.result.proceed == 'false'
         run: echo "No matching string found, exiting."
 
       - name: Create files
-        if: steps.extract_details.outputs.proceed == 'true'
+        if: steps.extract_details.outputs.result.proceed == 'true'
         run: |
           echo "Creating files..."
-          echo "" > "${{ steps.extract_details.outputs.yyy }}.txt"
-          echo "" > "${{ steps.extract_details.outputs.xxx }}.txt"
+          echo "" > "${{ steps.extract_details.outputs.result.yyy }}.txt"
+          echo "" > "${{ steps.extract_details.outputs.result.xxx }}.txt"
 
       - name: Configure git
-        if: steps.extract_details.outputs.proceed == 'true'
+        if: steps.extract_details.outputs.result.proceed == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Create a new branch for changes
-        if: steps.extract_details.outputs.proceed == 'true'
+        if: steps.extract_details.outputs.result.proceed == 'true'
         run: |
           git checkout -b create-files-${{ github.event.issue.number }}
 
       - name: Commit changes
-        if: steps.extract_details.outputs.proceed == 'true'
+        if: steps.extract_details.outputs.result.proceed == 'true'
         run: |
           git add .
           git commit -m "Create files based on issue #${{ github.event.issue.number }}"
 
       - name: Push changes
-        if: steps.extract_details.outputs.proceed == 'true'
+        if: steps.extract_details.outputs.result.proceed == 'true'
         run: |
           git push -u origin create-files-${{ github.event.issue.number }}
 
       - name: Create Pull Request
-        if: steps.extract_details.outputs.proceed == 'true'
+        if: steps.extract_details.outputs.result.proceed == 'true'
         uses: actions/github-script@v6
         with:
           script: |
