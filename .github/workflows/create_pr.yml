@@ -21,6 +21,7 @@ jobs:
             console.log("body:", issueBody);
             const regex = /ignore alert (\w+) (\w+)/;
             const match = issueBody.match(regex);
+            console.log("match:", match);
             if (!match) {
               return { proceed: false };
             }
